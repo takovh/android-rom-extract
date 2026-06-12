@@ -1,3 +1,5 @@
 .venv
+.vscode
 /output
 /firmware
+__pycache__
