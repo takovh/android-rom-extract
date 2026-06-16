@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
-YAFFS1 extractor for stripped (no-spare/OOB) format.
+YAFFS1 (v1 root directory) extractor for stripped (no-spare/OOB) format.
+Only supports YAFFS1 images identified as "YAFFS filesystem root entry (little
+endian), type root or directory, v1 root directory".
 Format: block_pages=8, page_size=512, no spare data.
 Each block's page 0 = object header; subsequent pages = file data.
 """
