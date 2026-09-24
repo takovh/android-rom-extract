@@ -77,20 +77,23 @@ def extract(img_path, out_dir):
 
     mview = memoryview(data)
 
-    # Write file data directly to an open file object, page by page (zero-copy)
+    # Write file data directly to an open file object.
+    # Each 4096-byte block layout: [0..4079] = 4080 bytes data, [4080..4095] = 16-byte YAFFS tag.
+    # Tags must be skipped; otherwise they corrupt file content at offsets 4080, 8176, ...
+    DATA_PER_BLOCK = BLOCK_PAGES * PAGE - 16  # 4080
+
     def write_file_data(f, header_block, file_size):
         if file_size == 0:
             return
-        pages_needed = (file_size + PAGE - 1) // PAGE
         remaining = file_size
-        for i in range(pages_needed):
-            data_block = header_block + 1 + (i // BLOCK_PAGES)
-            data_page_in_block = i % BLOCK_PAGES
-            abs_page = data_block * BLOCK_PAGES + data_page_in_block
-            off = abs_page * PAGE
-            chunk = min(PAGE, remaining)
-            f.write(mview[off:off+chunk])
+        block_idx = 0
+        while remaining > 0:
+            data_block = header_block + 1 + block_idx
+            off = data_block * BLOCK_PAGES * PAGE
+            chunk = min(DATA_PER_BLOCK, remaining)
+            f.write(mview[off:off + chunk])
             remaining -= chunk
+            block_idx += 1
 
     # Create output directories
     os.makedirs(out_dir, exist_ok=True)
