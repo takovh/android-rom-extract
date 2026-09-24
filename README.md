@@ -1,3 +1,37 @@
+# android_system 分区分析
+
+文件来源
+
+`firmware/android_system.img` — 这是一个 Android `system` 分区（YAFFS1 文件系统），属于 EMBA 固件安全分析日志的一部分，大小约 184MB。
+
+## 系统信息（来自 `build.prop`）
+
+- Android 4.0.3 (Ice Cream Sandwich)，SDK 15
+- 构建版本：`ICS.MBX.20140924`，编译于 2014-09-24（已过时约 12 年）
+- 产品：MBX `f16ref` 参考板（Amlogic M1/MBOX 平台），armeabi-v7a
+- **`test-keys` 签名 + `eng.root` 构建**（非正式 release-keys）
+- 定位为机顶盒/电视类设备：无电池、无电话、无 GPS、无触摸屏，带以太网、DVB 数字电视、1080p 输出、遥控器光标 UI
+
+## 目录结构
+
+| 目录                                    | 内容                                                            |
+| --------------------------------------- | --------------------------------------------------------------- |
+| `app/`                                | 系统 APK（Launcher、Browser、Settings、Aml2DLauncher 等）+ odex |
+| `bin/` `xbin/`                      | 系统可执行文件                                                  |
+| `etc/`                                | 配置（wifi、permissions、vold.fstab、fw_env.config 等）         |
+| `framework/`                          | Android 框架 jar                                                |
+| `lib/`                                | 原生库（libMali、libamplayer、Mali GPU、8192cu.ko WiFi 驱动等） |
+| `usr/` `fonts/` `media/` `tts/` | 输入映射、字体、媒体资源、TTS                                   |
+
+## 安全相关观察点
+
+1. `test-keys` + root 编译，可能存在调试后门
+2. 2014 年的 ICS 系统，已知漏洞众多
+3. `keyguard.enable=false`、`ro.platform.has.security=false`
+4. `etc/` 下的 `ekcert.pem`、`security/`、`fw_env.config`（U-Boot 环境变量）
+5. 厂商专有库 `libamplayer`、`libpickit`、`Aml2DLauncher` 等 Amlogic 定制组件
+
+
 # Rockchip RK3288 Android 11
 
 ## Rockchip RK3288 Android 11 OTA 固件
@@ -8,32 +42,32 @@
 
 ### 设备信息
 
-| 项目 | 内容 |
-|---|---|
-| 品牌 | SMDT (视美泰) |
-| 平台 | Rockchip RK3288 |
-| 设备名 | `rk3288_Android11` |
-| Android 版本 | 11 (API 30, SDK level 30) |
-| 构建类型 | userdebug |
-| 构建指纹 | `rockchip/rk3288_Android11/rk3288_Android11:11/RD2A.211001.002/eng.lxw.20250305.235808:userdebug/release-keys` |
-| 构建用户 | eng.lxw |
-| 构建时间 | 2025-03-05 23:58:08 |
-| 安全补丁级别 | 2021-10-01 |
-| OTA 类型 | BLOCK 模式增量更新 |
+| 项目         | 内容                                                                                                             |
+| ------------ | ---------------------------------------------------------------------------------------------------------------- |
+| 品牌         | SMDT (视美泰)                                                                                                    |
+| 平台         | Rockchip RK3288                                                                                                  |
+| 设备名       | `rk3288_Android11`                                                                                             |
+| Android 版本 | 11 (API 30, SDK level 30)                                                                                        |
+| 构建类型     | userdebug                                                                                                        |
+| 构建指纹     | `rockchip/rk3288_Android11/rk3288_Android11:11/RD2A.211001.002/eng.lxw.20250305.235808:userdebug/release-keys` |
+| 构建用户     | eng.lxw                                                                                                          |
+| 构建时间     | 2025-03-05 23:58:08                                                                                              |
+| 安全补丁级别 | 2021-10-01                                                                                                       |
+| OTA 类型     | BLOCK 模式增量更新                                                                                               |
 
 ### 分区镜像
 
-| 分区 | 文件 | 说明 |
-|---|---|---|
-| `system` | `system.new.dat.br` | 系统分区 (brotli 压缩) |
-| `vendor` | `vendor.new.dat.br` | 厂商分区 |
-| `product` | `product.new.dat.br` | 产品分区 |
-| `odm` | `odm.new.dat.br` | ODM 分区 |
-| `system_ext` | `system_ext.new.dat.br` | 系统扩展分区 |
-| `boot` | `boot.img` | 内核镜像 |
-| `trust` | `trust.img` | TrustZone 固件 |
-| `uboot` | `uboot.img` | U-Boot 引导加载程序 |
-| `dtbo` | `dtbo.img` | Device Tree Blob Overlay |
+| 分区           | 文件                      | 说明                     |
+| -------------- | ------------------------- | ------------------------ |
+| `system`     | `system.new.dat.br`     | 系统分区 (brotli 压缩)   |
+| `vendor`     | `vendor.new.dat.br`     | 厂商分区                 |
+| `product`    | `product.new.dat.br`    | 产品分区                 |
+| `odm`        | `odm.new.dat.br`        | ODM 分区                 |
+| `system_ext` | `system_ext.new.dat.br` | 系统扩展分区             |
+| `boot`       | `boot.img`              | 内核镜像                 |
+| `trust`      | `trust.img`             | TrustZone 固件           |
+| `uboot`      | `uboot.img`             | U-Boot 引导加载程序      |
+| `dtbo`       | `dtbo.img`              | Device Tree Blob Overlay |
 
 > 每个 `.dat.br` 分区镜像均附带 `.transfer.list` (增量差异列表) 和 `.patch.dat` (补丁数据)，此为增量 OTA 包，需基于旧版系统才能应用更新。
 
@@ -47,45 +81,41 @@
 
 ### 文件信息
 
-| 项目 | 内容 |
-|---|---|
-| 格式 | Rockchip Firmware Image (RKFW + Image Table) |
-| 大小 | ~1.8 GB |
-| 包含 | Bootloader + 全部分区镜像 |
-| 烧录方式 | `upgrade_tool` / `rkdeveloptool` |
+| 项目     | 内容                                         |
+| -------- | -------------------------------------------- |
+| 格式     | Rockchip Firmware Image (RKFW + Image Table) |
+| 大小     | ~1.8 GB                                      |
+| 包含     | Bootloader + 全部分区镜像                    |
+| 烧录方式 | `upgrade_tool` / `rkdeveloptool`         |
 
 设备信息与上方 OTA 包一致（同一构建版本）。
 
 ### 分区布局 (基于 parameter 文件)
 
-| 分区 | 块地址偏移 | 大小 | 说明 |
-|---|---|---|---|
-| `security` | 0x00002000 | 4MB | 安全分区 |
-| `uboot` | 0x00004000 | 4MB | U-Boot 引导程序 |
-| `trust` | 0x00006000 | 4MB | TrustZone 固件 (ATF) |
-| `misc` | 0x00008000 | 4MB | 启动模式控制 |
-| `oempriv` | 0x0000a000 | 8MB | OEM 私有数据 |
-| `smdt` | 0x0008a000 | 4MB | SMDT 厂商数据 |
-| `dtbo` | 0x0008c000 | 4MB | Device Tree Blob Overlay |
-| `vbmeta` | 0x0008e000 | 1MB | Verified Boot 元数据 |
-| `boot` | 0x0008e800 | 20MB | Linux Kernel + initramfs |
-| `recovery` | 0x000a2800 | 48MB | Recovery 恢复系统 |
-| `backup` | 0x000d2800 | 96MB | 备份分区 |
-| `cache` | 0x00192800 | 96MB | 缓存 |
-| `metadata` | 0x00252800 | 4MB | 元数据 |
-| `baseparameter` | 0x0025a800 | 1MB | 基础参数 |
-| `super` | 0x0025b000 | ~95MB | 动态分区 (system/vendor/product/odm/system_ext) |
-| `userdata` | 0x0086f000 | 剩余空间 | 用户数据 (grow) |
+| 分区              | 块地址偏移 | 大小     | 说明                                            |
+| ----------------- | ---------- | -------- | ----------------------------------------------- |
+| `security`      | 0x00002000 | 4MB      | 安全分区                                        |
+| `uboot`         | 0x00004000 | 4MB      | U-Boot 引导程序                                 |
+| `trust`         | 0x00006000 | 4MB      | TrustZone 固件 (ATF)                            |
+| `misc`          | 0x00008000 | 4MB      | 启动模式控制                                    |
+| `oempriv`       | 0x0000a000 | 8MB      | OEM 私有数据                                    |
+| `smdt`          | 0x0008a000 | 4MB      | SMDT 厂商数据                                   |
+| `dtbo`          | 0x0008c000 | 4MB      | Device Tree Blob Overlay                        |
+| `vbmeta`        | 0x0008e000 | 1MB      | Verified Boot 元数据                            |
+| `boot`          | 0x0008e800 | 20MB     | Linux Kernel + initramfs                        |
+| `recovery`      | 0x000a2800 | 48MB     | Recovery 恢复系统                               |
+| `backup`        | 0x000d2800 | 96MB     | 备份分区                                        |
+| `cache`         | 0x00192800 | 96MB     | 缓存                                            |
+| `metadata`      | 0x00252800 | 4MB      | 元数据                                          |
+| `baseparameter` | 0x0025a800 | 1MB      | 基础参数                                        |
+| `super`         | 0x0025b000 | ~95MB    | 动态分区 (system/vendor/product/odm/system_ext) |
+| `userdata`      | 0x0086f000 | 剩余空间 | 用户数据 (grow)                                 |
 
 > 块地址以 512 字节为一个扇区（sector）。此镜像包含完整 Bootloader（DDR 初始化、USB 下载模式、U-Boot），可通过 Rockchip `upgrade_tool` 或 `rkdeveloptool` 直接烧录到 eMMC 空片，**无需先有系统**。
 
 ---
 
-
-
 # 6320SE-20260428（Android 9）增加烧录MAC地址功能
-
-
 
 ## HiSilicon GK6320V100 Android 机顶盒固件
 
@@ -95,36 +125,36 @@
 
 ### 设备信息
 
-| 项目 | 内容 |
-|---|---|
-| 品牌 | SMDT (视美泰) |
-| 芯片型号 | HiSilicon GK6320V100 (6323SE) |
-| 系统 | Android |
-| 构建时间 | 2026-04-28 17:05:59 |
-| 包类型 | 完整 eMMC 烧录包 (含分区表 XML) |
+| 项目     | 内容                            |
+| -------- | ------------------------------- |
+| 品牌     | SMDT (视美泰)                   |
+| 芯片型号 | HiSilicon GK6320V100 (6323SE)   |
+| 系统     | Android                         |
+| 构建时间 | 2026-04-28 17:05:59             |
+| 包类型   | 完整 eMMC 烧录包 (含分区表 XML) |
 
 ### 分区表 (基于 `GK6320V100-emmc.xml`)
 
-| 分区 | 文件 | 大小 | 起始地址 | 文件系统 |
-|---|---|---|---|---|
-| `fastboot` | `fastboot.bin` | 1M | 0M | none |
-| `bootargs` | `bootargs.bin` | 512K | 1M | none |
-| `bootargsbak` | `bootargs.bin` | 512K | 1536K | none |
-| `recovery` | `recovery.img` | 20M | 2M | none |
-| `securestore` | `securestore.ext4` | 8M | 24M | ext3/4 |
-| `atf` | `bl31.bin` | 2M | 32M | none |
-| `baseparam` | `baseparam.img` | 8M | 34M | none |
-| `pqparam` | `pq_param.bin` | 8M | 42M | none |
-| `dtbo` | `dtbo.img` | 2M | 50M | none |
-| `logo` | `logo.img` | 10M | 52M | none |
-| `recoverybak` | `recovery.img` | 20M | 92M | none |
-| `boot` | `kernel.img` | 60M | 112M | none |
-| `system` | `system.ext4` | 1200M | 212M | ext3/4 |
-| `cache` | `cache.ext4` | 800M | 1412M | ext3/4 |
-| `vendor` | `vendor.ext4` | 400M | 2212M | ext3/4 |
-| `backup` | `backup.ext4` | 800M | 2612M | ext3/4 |
-| `private` | `private.ext4` | 50M | 3412M | ext3/4 |
-| `userdata` | `userdata.ext4` | 剩余空间 | 3466M | ext3/4 |
+| 分区            | 文件                 | 大小     | 起始地址 | 文件系统 |
+| --------------- | -------------------- | -------- | -------- | -------- |
+| `fastboot`    | `fastboot.bin`     | 1M       | 0M       | none     |
+| `bootargs`    | `bootargs.bin`     | 512K     | 1M       | none     |
+| `bootargsbak` | `bootargs.bin`     | 512K     | 1536K    | none     |
+| `recovery`    | `recovery.img`     | 20M      | 2M       | none     |
+| `securestore` | `securestore.ext4` | 8M       | 24M      | ext3/4   |
+| `atf`         | `bl31.bin`         | 2M       | 32M      | none     |
+| `baseparam`   | `baseparam.img`    | 8M       | 34M      | none     |
+| `pqparam`     | `pq_param.bin`     | 8M       | 42M      | none     |
+| `dtbo`        | `dtbo.img`         | 2M       | 50M      | none     |
+| `logo`        | `logo.img`         | 10M      | 52M      | none     |
+| `recoverybak` | `recovery.img`     | 20M      | 92M      | none     |
+| `boot`        | `kernel.img`       | 60M      | 112M     | none     |
+| `system`      | `system.ext4`      | 1200M    | 212M     | ext3/4   |
+| `cache`       | `cache.ext4`       | 800M     | 1412M    | ext3/4   |
+| `vendor`      | `vendor.ext4`      | 400M     | 2212M    | ext3/4   |
+| `backup`      | `backup.ext4`      | 800M     | 2612M    | ext3/4   |
+| `private`     | `private.ext4`     | 50M      | 3412M    | ext3/4   |
+| `userdata`    | `userdata.ext4`    | 剩余空间 | 3466M    | ext3/4   |
 
 > 使用 Hitool 或海思烧录工具配合 XML 分区表刷入 eMMC。
 
@@ -138,17 +168,17 @@
 
 ### 设备信息
 
-| 项目 | 内容 |
-|---|---|
-| 平台 | HiSilicon GK6320V100 |
-| Android 版本 | 9 (API 28, SDK level 28) |
-| 构建类型 | userdebug / test-keys |
-| 构建指纹 | `GkSTBAndroid/GK6320V100/GK6320V100:9/PPR1.180610.011/cj04281706:userdebug/test-keys` |
-| 构建用户 | cj |
-| 构建时间 | 2026-04-28 17:06:18 |
-| 安全补丁级别 | 2021-06-10 |
-| OTA 类型 | BLOCK 模式 |
-| 设备路径 | `/dev/block/platform/soc/f9830000.gkmciv200.MMC` |
+| 项目         | 内容                                                                                    |
+| ------------ | --------------------------------------------------------------------------------------- |
+| 平台         | HiSilicon GK6320V100                                                                    |
+| Android 版本 | 9 (API 28, SDK level 28)                                                                |
+| 构建类型     | userdebug / test-keys                                                                   |
+| 构建指纹     | `GkSTBAndroid/GK6320V100/GK6320V100:9/PPR1.180610.011/cj04281706:userdebug/test-keys` |
+| 构建用户     | cj                                                                                      |
+| 构建时间     | 2026-04-28 17:06:18                                                                     |
+| 安全补丁级别 | 2021-06-10                                                                              |
+| OTA 类型     | BLOCK 模式                                                                              |
+| 设备路径     | `/dev/block/platform/soc/f9830000.gkmciv200.MMC`                                      |
 
 ### 包结构
 
@@ -199,26 +229,26 @@
 
 ### 设备信息
 
-| 项目 | 内容 |
-|---|---|
-| 平台 | HiSilicon GK6320V100 |
-| Android 版本 | 9 (API 28, SDK level 28) |
-| 构建指纹 | `GkSTBAndroid/GK6320V100/GK6320V100:9/PPR1.180610.011/cj04281706:userdebug/test-keys` |
-| 构建用户 | cj |
-| 构建时间 | 2026-04-28 17:06:18 |
-| 安全补丁级别 | 2021-06-10 |
-| OTA 类型 | BLOCK 模式 |
-| 包大小 | 448MB |
+| 项目         | 内容                                                                                    |
+| ------------ | --------------------------------------------------------------------------------------- |
+| 平台         | HiSilicon GK6320V100                                                                    |
+| Android 版本 | 9 (API 28, SDK level 28)                                                                |
+| 构建指纹     | `GkSTBAndroid/GK6320V100/GK6320V100:9/PPR1.180610.011/cj04281706:userdebug/test-keys` |
+| 构建用户     | cj                                                                                      |
+| 构建时间     | 2026-04-28 17:06:18                                                                     |
+| 安全补丁级别 | 2021-06-10                                                                              |
+| OTA 类型     | BLOCK 模式                                                                              |
+| 包大小       | 448MB                                                                                   |
 
 ### 与 `update-factory_20260428_170559` 对比
 
-| 项目 | `update-factory` | `update_smdt-2` |
-|---|---|---|
-| 格式化 cache/userdata | ✅ 是 | ❌ 否 |
-| `system.patch.dat` / `vendor.patch.dat` | 有内容 (增量) | **0 字节** (全量替换) |
-| 脚本判断逻辑 | 固定顺序 | `get_stage` / `get_recovery_state` 条件判断 |
-| `cache.img` / `userdata.img` | 包含 | 不包含 |
-| 用途 | 产线烧录/售后恢复 | 系统升级更新，**保留用户数据** |
+| 项目                                        | `update-factory` | `update_smdt-2`                               |
+| ------------------------------------------- | ------------------ | ----------------------------------------------- |
+| 格式化 cache/userdata                       | ✅ 是              | ❌ 否                                           |
+| `system.patch.dat` / `vendor.patch.dat` | 有内容 (增量)      | **0 字节** (全量替换)                     |
+| 脚本判断逻辑                                | 固定顺序           | `get_stage` / `get_recovery_state` 条件判断 |
+| `cache.img` / `userdata.img`            | 包含               | 不包含                                          |
+| 用途                                        | 产线烧录/售后恢复  | 系统升级更新，**保留用户数据**            |
 
 ### 包结构
 
@@ -252,17 +282,17 @@
 
 ### 基本信息
 
-| 项目 | 内容 |
-|---|---|
-| 压缩包大小 | ~574 MB |
-| 解压后大小 | ~1.42 GB (仅含 Ctv_Update_660.bin) |
-| 芯片平台 | HiSilicon Hi3751V660 (华为海思) |
-| 硬件代号 | `huanglong` (黄龙) |
-| 系统类型 | Android TV |
-| 固件版本 | `v120v2.2.8` |
-| 构建日期 | 2024-08-14 15:24:08 |
-| 源码路径 | `HisiV660/vendor/open_source/u-boot/u-boot-2022.07` |
-| 打包格式 | 海思 `LOAD` 格式 |
+| 项目       | 内容                                                  |
+| ---------- | ----------------------------------------------------- |
+| 压缩包大小 | ~574 MB                                               |
+| 解压后大小 | ~1.42 GB (仅含 Ctv_Update_660.bin)                    |
+| 芯片平台   | HiSilicon Hi3751V660 (华为海思)                       |
+| 硬件代号   | `huanglong` (黄龙)                                  |
+| 系统类型   | Android TV                                            |
+| 固件版本   | `v120v2.2.8`                                        |
+| 构建日期   | 2024-08-14 15:24:08                                   |
+| 源码路径   | `HisiV660/vendor/open_source/u-boot/u-boot-2022.07` |
+| 打包格式   | 海思`LOAD` 格式                                     |
 
 ### 作用
 
@@ -270,54 +300,54 @@
 
 ### 固件分区布局
 
-| 分区 | 大小 | A/B | 说明 |
-|---|---|---|---|
-| `fastboot` | 1MB | - | Fastboot 引导 |
-| `bootargs` / `bootargsbak` | 1MB×2 | A/B | 启动参数 |
-| `sbl` / `sblbak` | 4MB×2 | A/B | 第二启动加载器 (DDR 训练) |
-| `batt_nv` | 1MB | - | 电池参数 |
-| `ddrparam` | 1MB | - | DDR 参数 |
-| `dtbo` / `dtbobak` | 10MB×2 | A/B | 设备树叠加层 |
-| `hrf` | 1MB | - | HRF 分区 |
-| `sensorhub` | 1MB | - | Sensor Hub |
-| `dmcu` | 4MB | - | 显示 MCU |
-| `slaveboot` / `slavebootbak` | 4MB×2 | A/B | 从启动 |
-| `reserved1` | 3MB | - | 保留 |
-| `atf` / `atfbak` | 2MB×2 | A/B | ARM Trusted Firmware |
-| `hhee` / `hheebak` | 3MB×2 | A/B | 华为可信执行环境 |
-| `trustedcore` / `trustedcorebak` | 10MB×2 | A/B | 可信核心 |
-| `boot` | 60MB | - | 内核 + ramdisk |
-| `ramdisk` | 3MB | - | RAM Disk |
-| `recovery` / `recoverybak` | 60MB×2 | A/B | Recovery 恢复系统 |
-| `reserved2` | 49MB | - | 保留 |
-| `deviceinfo` | 2MB | - | 设备信息 |
-| `misc` | 1MB | - | 启动模式控制 |
-| `versioninfo` | 1MB | - | 版本信息 |
-| `logo` | 40MB | - | 开机 Logo |
-| `bootmusic` / `bootmusicsec` | 10MB×2 | - | 开机音乐 |
-| `panel` / `panelbak` | 48MB×2 | A/B | 屏幕面板固件 |
-| `demura` | 4MB | - | Demura 校正 |
-| `baseparam` | 8MB | - | 基础参数 |
-| `reserved3` | 40MB | - | 保留 |
-| `vbmeta_system` / `vbmeta_vendor` | 1MB×2 | - | Verified Boot 元数据 |
-| `super` | 3640MB | - | Android 动态分区 |
-| `product` | 400MB | - | 产品分区 |
-| `odm` | 54MB | - | ODM 分区 |
-| `cache` | 800MB | - | 缓存 |
-| `securestore` | 8MB | - | 安全存储 |
-| `dfx` | 16MB | - | DFX 诊断 |
-| `eng` | 50MB | - | 工程模式 |
-| `reserved4` | 53MB | - | 保留 |
-| `metadata` | 16MB | - | 元数据 |
-| `userdata` | 剩余空间 | - | 用户数据 |
+| 分区                                  | 大小     | A/B | 说明                      |
+| ------------------------------------- | -------- | --- | ------------------------- |
+| `fastboot`                          | 1MB      | -   | Fastboot 引导             |
+| `bootargs` / `bootargsbak`        | 1MB×2   | A/B | 启动参数                  |
+| `sbl` / `sblbak`                  | 4MB×2   | A/B | 第二启动加载器 (DDR 训练) |
+| `batt_nv`                           | 1MB      | -   | 电池参数                  |
+| `ddrparam`                          | 1MB      | -   | DDR 参数                  |
+| `dtbo` / `dtbobak`                | 10MB×2  | A/B | 设备树叠加层              |
+| `hrf`                               | 1MB      | -   | HRF 分区                  |
+| `sensorhub`                         | 1MB      | -   | Sensor Hub                |
+| `dmcu`                              | 4MB      | -   | 显示 MCU                  |
+| `slaveboot` / `slavebootbak`      | 4MB×2   | A/B | 从启动                    |
+| `reserved1`                         | 3MB      | -   | 保留                      |
+| `atf` / `atfbak`                  | 2MB×2   | A/B | ARM Trusted Firmware      |
+| `hhee` / `hheebak`                | 3MB×2   | A/B | 华为可信执行环境          |
+| `trustedcore` / `trustedcorebak`  | 10MB×2  | A/B | 可信核心                  |
+| `boot`                              | 60MB     | -   | 内核 + ramdisk            |
+| `ramdisk`                           | 3MB      | -   | RAM Disk                  |
+| `recovery` / `recoverybak`        | 60MB×2  | A/B | Recovery 恢复系统         |
+| `reserved2`                         | 49MB     | -   | 保留                      |
+| `deviceinfo`                        | 2MB      | -   | 设备信息                  |
+| `misc`                              | 1MB      | -   | 启动模式控制              |
+| `versioninfo`                       | 1MB      | -   | 版本信息                  |
+| `logo`                              | 40MB     | -   | 开机 Logo                 |
+| `bootmusic` / `bootmusicsec`      | 10MB×2  | -   | 开机音乐                  |
+| `panel` / `panelbak`              | 48MB×2  | A/B | 屏幕面板固件              |
+| `demura`                            | 4MB      | -   | Demura 校正               |
+| `baseparam`                         | 8MB      | -   | 基础参数                  |
+| `reserved3`                         | 40MB     | -   | 保留                      |
+| `vbmeta_system` / `vbmeta_vendor` | 1MB×2   | -   | Verified Boot 元数据      |
+| `super`                             | 3640MB   | -   | Android 动态分区          |
+| `product`                           | 400MB    | -   | 产品分区                  |
+| `odm`                               | 54MB     | -   | ODM 分区                  |
+| `cache`                             | 800MB    | -   | 缓存                      |
+| `securestore`                       | 8MB      | -   | 安全存储                  |
+| `dfx`                               | 16MB     | -   | DFX 诊断                  |
+| `eng`                               | 50MB     | -   | 工程模式                  |
+| `reserved4`                         | 53MB     | -   | 保留                      |
+| `metadata`                          | 16MB     | -   | 元数据                    |
+| `userdata`                          | 剩余空间 | -   | 用户数据                  |
 
 ### DDR 配置支持
 
-| 配置 | 规格 | 用途 |
-|---|---|---|
-| hi3751v660dma | DDR4-3200 4GB (16bit×2, 2层板) | 主配置 |
-| hi3751v660dmb | LPDDR4-2933 4GB (32bit×1, 2层板) | 备选 |
-| hi3751v660dmb | LPDDR4X-2933 4GB (32bit×1, 2层板) | 备选 |
+| 配置          | 规格                               | 用途   |
+| ------------- | ---------------------------------- | ------ |
+| hi3751v660dma | DDR4-3200 4GB (16bit×2, 2层板)    | 主配置 |
+| hi3751v660dmb | LPDDR4-2933 4GB (32bit×1, 2层板)  | 备选   |
+| hi3751v660dmb | LPDDR4X-2933 4GB (32bit×1, 2层板) | 备选   |
 
 ### 启动参数
 
